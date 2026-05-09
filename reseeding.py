@@ -4,6 +4,69 @@ import csv, io
 from datetime import datetime
 # endregion
 
+"""
+=============================================================================
+Packet2BReseeder — QuantForge V12 | Data Seeding Utility
+=============================================================================
+
+WHAT IT DOES:
+    Rebuilds a clean baseline of daily OHLCV price history for all tickers
+    in the defined universe and saves each one as a CSV file in the
+    QuantConnect Object Store. Also writes a manifest CSV summarising
+    bar count and last saved date for every ticker.
+
+    This is a full overwrite — existing stored CSVs are replaced.
+    It is NOT an append operation.
+
+PARAMETERS:
+    STORAGE_PREFIX (str):
+        Object store path prefix where individual ticker CSVs are saved.
+        Default: "v12/data/daily/"
+        Each file saved as: v12/data/daily/<TICKER>.csv
+
+    MANIFEST_KEY (str):
+        Object store path for the manifest summary file.
+        Default: "v12/data/manifest.csv"
+        Columns: ticker, bars, last_date
+
+    SEED_END_DATE (date):
+        The cutoff date for seeding. Only bars on or before this date
+        are included. Bars after this date are ignored even if returned
+        by QC history call.
+        Default: 2024-05-15
+        Change this if you need to reseed to a different baseline date.
+
+    UNIVERSE (list):
+        List of ETF tickers to seed. Currently 40 tickers across
+        US equity, sectors, developed markets, emerging markets,
+        bonds, commodities, and currencies.
+        Add or remove tickers here if the universe changes.
+
+WHEN TO USE:
+    1. First-time setup — building the data store from scratch.
+    2. After a major universe change — new tickers added that have
+       no existing CSV in the object store.
+    3. Data corruption or inconsistency — when existing CSVs need
+       to be wiped and rebuilt cleanly from a known good baseline.
+    4. After a SEED_END_DATE change — when you want to reset the
+       baseline to a different historical cutoff date.
+
+    DO NOT use this for routine daily updates — use Packet2BDailyRefresh
+    for that. This utility is destructive (overwrites existing files).
+
+OUTPUT:
+    - One CSV per ticker at: v12/data/daily/<TICKER>.csv
+      Schema: date, open, high, low, close, volume
+              RAW price normalization | UTC timestamps | YYYY-MM-DD dates
+
+    - Manifest at: v12/data/manifest.csv
+      Schema: ticker, bars, last_date
+
+VERIFIED: May 2026 — Stefan confirmed seeder working correctly.
+=============================================================================
+"""
+
+
 class Packet2BReseeder(QCAlgorithm):
 
     STORAGE_PREFIX = "v12/data/daily/"
